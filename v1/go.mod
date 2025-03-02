@@ -1,4 +1,4 @@
-module note-manager
+module git-note-app
 
 go 1.23.0
 
