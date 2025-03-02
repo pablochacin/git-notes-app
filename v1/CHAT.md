@@ -968,12 +968,17 @@ This should provide all the X11-related libraries that Fyne might need for build
 
 The code worked.
 
+<details>
+
+<summary> screenshots (click to expand) </summary>
+
 ![main view](./screenshots/v1/main-view.png)
 
 ![note entry](./screenshots/v1/note-entry.png)
 
 ![notes list](./screenshots/v1/note-list.png)
 
+</details>
 
 ## Fix UI
 
@@ -1464,3 +1469,12 @@ I've made several improvements to enhance the content entry field and overall UI
 These changes should provide a much better editing experience with the content field now having proper scrolling and taking up most of the available space. The UI is also more organized with a clearer visual hierarchy.
 
 
+<details>
+
+<summary> screenshots (click to expand) </summary>
+
+![main view](./screenshots/v2/main-view.png)
+
+![note entry](./screenshots/v2/note-entry.png)
+
+</details>
