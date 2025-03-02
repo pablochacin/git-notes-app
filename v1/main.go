@@ -13,7 +13,6 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/go-git/go-git/v5"
@@ -438,7 +437,7 @@ func main() {
 		gitButtonsContainer, // Bottom
 		nil,              // Left
 		nil,              // Right
-		notesList         // Center (fills remaining space)
+		notesList,        // Center (fills remaining space)
 	)
 	
 	// Set minimum size for list container
