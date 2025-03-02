@@ -135,11 +135,17 @@ func listNotes(repoPath string) ([]Note, error) {
 	return notes, nil
 }
 
-// sortNotesByCreationTime sorts notes by creation time (newest first)
-func sortNotesByCreationTime(notes []Note) {
+// sortNotesByDateAndTitle sorts notes first by creation date (newest first)
+// and then by title (alphabetically) for notes with the same date
+func sortNotesByDateAndTitle(notes []Note) {
 	sort.Slice(notes, func(i, j int) bool {
+	    // First compare by date (newest first)
+	    if !notes[i].Created.Equal(notes[j].Created) {
 		return notes[i].Created.After(notes[j].Created)
-	})
+	    }
+	    // If dates are equal, compare by title (alphabetically)
+	    return strings.ToLower(notes[i].Title) < strings.ToLower(notes[j].Title)
+	})    
 }
 
 // parseNoteFromContent extracts note data from file content
@@ -327,7 +333,7 @@ func main() {
 		}
 		
 		// Sort notes by creation time (newest first)
-		sortNotesByCreationTime(notes)
+		sortNotesByDateAndTitle(notes)
 		
 		// Fully refresh the list widget
 		notesList.Refresh()
@@ -468,3 +474,4 @@ func main() {
 	// Show and run
 	w.ShowAndRun()
 }
+
