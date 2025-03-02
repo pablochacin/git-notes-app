@@ -29,12 +29,12 @@ The main issue is that while you're updating the notes slice correctly with the 
 
 The process went thru several iterations. 
 
-1. [Initial implementation](#initial-version)
-2. [Display the content of the note with multiple lines](#second-iteration-with-multi-line-text-entry)
-3. [Refresh the list of notes after inserting a note](#third-iteration-with-list-refresh)
-4. [Display the full list of notes](#fourth-iteration-with-full-note-list-panel)
+1. Initial implementation
+2. Display the content of the note with multiple lines
+3. Refresh the list of notes after inserting a note
+4. Display the full list of notes
+5. Sort notes by creation date
 
 At this point the application was totally functional and was capable of:
 - add notes
 - update notes
-

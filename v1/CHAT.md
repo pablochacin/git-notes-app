@@ -2718,3 +2718,72 @@ These changes will ensure that the list of notes uses the full available height 
 ![list updated](./screenshots/v4/list-updated.png)
 
 </details>
+
+
+## Fix ordering
+
+> Note: At this point the context was full and I had to start a new chat, pasting the latest version of the application.
+
+This application allows saving notes in a git repository. The panel in the left displays the list of notes. This list should be ordered by creating time, from more recent to less recent.
+
+### Claude response
+
+Based on your code, I see that you have a Go application using the Fyne UI framework to create a notes manager that integrates with Git for version control. It's a nice design with a split panel interface - notes list on the left and editor on the right.
+
+Regarding your request about ordering the notes list by creation time (newest to oldest), I notice that your current implementation in  `listNotes()` retrieves the notes but doesn't apply any ordering. Here's how you can modify your code to sort the notes by creation time:
+In the listNotes function, after you've collected all the notes, you need to sort them before returning. You can add a sorting step like this:
+
+```go
+// listNotes retrieves all notes from the repository
+func listNotes(repoPath string) ([]Note, error) {
+    var notes []Note
+    
+    // Get all .md files
+    files, err := filepath.Glob(filepath.Join(repoPath, "*.md"))
+    if err != nil {
+        return nil, fmt.Errorf("failed to list files: %v", err)
+    }
+    
+    for _, file := range files {
+        content, err := ioutil.ReadFile(file)
+        if err != nil {
+            continue
+        }
+        
+        // Parse note from file
+        note, err := parseNoteFromContent(content, filepath.Base(file))
+        if err != nil {
+            continue
+        }
+        
+        notes = append(notes, note)
+    }
+    
+    // Sort notes by creation time (newest first)
+    sort.Slice(notes, func(i, j int) bool {
+        return notes[i].Created.After(notes[j].Created)
+    })
+    
+    return notes, nil
+}
+```
+
+You'll need to add the "sort" package to your imports:
+
+```go
+import (
+    // existing imports...
+    "sort"
+
+)
+```
+
+This modification will sort the notes so that the most recent ones appear first in the list, which should make them display in the order you want in the UI panel.
+
+<details>
+
+<summary> screenshots (click to expand) </summary>
+
+![main view](./screenshots/v5/main-view.png)
+
+<details>
