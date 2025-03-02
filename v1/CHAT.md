@@ -2214,6 +2214,8 @@ This should now properly update the list after adding a new note, and the code s
 
 ![main view](./screenshots/v3/main-view.png)
 
+![note entry](./screenshots/v3/note-entry.png)
+
 </details>
 
 
