@@ -424,3 +424,43 @@ refreshNotesList := func() {
 4. Ensured that sorting is applied during the initial loading of notes and after any operations that modify the notes collection (save, pull)
 
 These changes will ensure that the notes list is always displayed with the newest notes at the top, which should solve your ordering issue.
+
+## Sort by date and title
+
+At this point, I had to review the code and realized that the notes were sorted but only by data and as all were created the same day, the order appeared random
+
+I asked claude the following:
+
+> Sort the notes by creation date and title. Apply the changes to the existing code and show me the full code
+
+### Claude response
+
+Notes Manager App with Sorted List
+
+[Click to open code](main.go)
+
+I've updated the code to sort the notes by both creation date and title. The primary sort is by creation date (newest first), and for notes created on the same date, they're sorted alphabetically by title. Here are the key changes:
+
+1. Replaced the previous sorting function with a new sortNotesByDateAndTitle function:
+
+```go
+// sortNotesByDateAndTitle sorts notes first by creation date (newest first)
+// and then by title (alphabetically) for notes with the same date
+func sortNotesByDateAndTitle(notes []Note) {
+    sort.Slice(notes, func(i, j int) bool {
+        // First compare by date (newest first)
+        if !notes[i].Created.Equal(notes[j].Created) {
+            return notes[i].Created.After(notes[j].Created)
+        }
+        // If dates are equal, compare by title (alphabetically)
+        return strings.ToLower(notes[i].Title) < strings.ToLower(notes[j].Title)
+    })
+}
+```
+
+2. Updated all the references to the sorting function in the refreshNotesList function and other places to use the new function.
+Added case insensitivity to the title comparison (using strings.ToLower) to ensure a more natural alphabetical sorting.
+
+3. This implementation will first group notes by their creation date (newest first), and then within each date group, sort them alphabetically by title. This gives you a clear chronological organization with a predictable alphabetical sub-ordering.
+
+###

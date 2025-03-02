@@ -36,7 +36,7 @@ The process went thru several iterations.
 4. [Display the full list of notes](#fourth-iteration-with-full-note-list-panel)
 5. [Sort notes by creation date](#v5-sort-note-list)
 5.1 Second attempt to sort, didn't work
-
+6. Sort by date and title (did not work)
 At this point the application was totally functional and was capable of:
 - add notes
 - update notes
@@ -74,4 +74,5 @@ The screen shots bellow show the progress.
 ### v5: sort note list
 
 ![main view](./screenshots/v5/main-view.png)
+
 
