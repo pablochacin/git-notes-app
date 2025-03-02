@@ -4,4 +4,8 @@
 
 ### Initial version
 
-![screenshot](./screenshots/initial-version.png)
+![main view](./screenshots/v1/main-view.png)
+
+![note entry](./screenshots/v1/note-entry.png)
+
+![notes list](./screenshots/v1/note-list.png)
