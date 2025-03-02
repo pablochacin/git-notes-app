@@ -14,7 +14,7 @@ Additionally, I want to be able to list existing documents in the git repository
 
 The programming language should go, preferably. The code should be portable across linux distruibutions. But if this is not possible, ubuntu should be preferable.
 
-## claude response
+### claude response
 
 I'll help you develop a desktop application for Linux that manages text notes and syncs them with a GitHub repository. Let's create a Go-based solution that will be portable across Linux distributions.
 
@@ -427,6 +427,7 @@ func main() {
 
 This is a complete note-taking application written in Go with GitHub integration. Here's an overview of its features:
 
+
 ### Core Note Management:
 
 1. Create notes with title, tags, and markdown content
@@ -444,7 +445,7 @@ This is a complete note-taking application written in Go with GitHub integration
 * Note editor on the right
 * Markdown content editing
 
-### Setup & Dependencies
+#### Setup & Dependencies
 To run this application, you'll need:
 
 Go installed on your system
@@ -462,7 +463,8 @@ go get github.com/go-git/go-git/v5
 go build
 ```
 
-### How It Works
+#### How It Works
+
 The app creates/uses a git repository in your home directory (~/notes-repo)
 Each note is saved as a separate markdown file
 Files are automatically committed to the local git repository
@@ -473,6 +475,8 @@ Would you like me to explain any specific part of the code in more detail or mak
 ## Change don't use git commands
 
 I want to make some changes. First, don't use git commands. use only the go-git library for all access to the git repository. Also, do not reference github in the code. use only git instead.
+
+### Claude response
 
 I'll make those changes to use only the go-git library and remove any GitHub-specific references. Here's the updated code:
 
@@ -924,11 +928,11 @@ I've made the following changes to the code:
 
 The application now exclusively uses the go-git library for all git operations and avoids any GitHub-specific references. This makes the app more generic and suitable for use with any git remote, not just GitHub.
 
-### Fix build error
+## Fix build error
 
 The go build command fails with this error /usr/bin/ld: cannot find -lXxf86vm: No such file or directory
 
-Edit
+### Claude response
 
 This error indicates that your system is missing a development library that's required by the Fyne UI toolkit. The Xxf86vm library is part of X11 development packages and is needed for graphics rendering.
 
