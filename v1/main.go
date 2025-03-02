@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -18,6 +17,8 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 )
 
 type Note struct {
@@ -32,33 +33,33 @@ type AppConfig struct {
 }
 
 // ensureRepoExists checks if the repo exists and is a git repo
-func ensureRepoExists(path string) error {
+func ensureRepoExists(path string) (*git.Repository, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// Create directory
 		if err := os.MkdirAll(path, 0755); err != nil {
-			return fmt.Errorf("failed to create directory: %v", err)
+			return nil, fmt.Errorf("failed to create directory: %v", err)
 		}
 		
 		// Initialize git repository
-		_, err := git.PlainInit(path, false)
+		repo, err := git.PlainInit(path, false)
 		if err != nil {
-			return fmt.Errorf("failed to initialize git repository: %v", err)
+			return nil, fmt.Errorf("failed to initialize git repository: %v", err)
 		}
 		
-		return nil
+		return repo, nil
 	}
 	
-	// Check if it's a git repository
-	_, err := git.PlainOpen(path)
+	// Open existing repository
+	repo, err := git.PlainOpen(path)
 	if err != nil {
-		return fmt.Errorf("not a valid git repository: %v", err)
+		return nil, fmt.Errorf("not a valid git repository: %v", err)
 	}
 	
-	return nil
+	return repo, nil
 }
 
 // saveNote saves a note to the repository
-func saveNote(note Note, repoPath string) error {
+func saveNote(note Note, repo *git.Repository, repoPath string) error {
 	// Format the filename: YYYY-MM-DD-title.md
 	fileName := fmt.Sprintf("%04d-%02d-%02d-%s.md", 
 		note.Created.Year(), 
@@ -78,18 +79,28 @@ func saveNote(note Note, repoPath string) error {
 		return fmt.Errorf("failed to write file: %v", err)
 	}
 	
-	// Add to git
-	cmd := exec.Command("git", "add", filePath)
-	cmd.Dir = repoPath
-	if err := cmd.Run(); err != nil {
+	// Get the worktree
+	w, err := repo.Worktree()
+	if err != nil {
+		return fmt.Errorf("failed to get worktree: %v", err)
+	}
+	
+	// Add file to git
+	_, err = w.Add(fileName)
+	if err != nil {
 		return fmt.Errorf("git add failed: %v", err)
 	}
 	
-	// Commit to git
+	// Commit changes
 	commitMsg := fmt.Sprintf("Add note: %s", note.Title)
-	cmd = exec.Command("git", "commit", "-m", commitMsg)
-	cmd.Dir = repoPath
-	if err := cmd.Run(); err != nil {
+	_, err = w.Commit(commitMsg, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "Notes App",
+			Email: "notes@example.com",
+			When:  time.Now(),
+		},
+	})
+	if err != nil {
 		return fmt.Errorf("git commit failed: %v", err)
 	}
 	
@@ -193,23 +204,37 @@ func parseNoteFromContent(content []byte, filename string) (Note, error) {
 	return note, nil
 }
 
-// pushToGitHub pushes changes to GitHub
-func pushToGitHub(repoPath string) error {
-	cmd := exec.Command("git", "push")
-	cmd.Dir = repoPath
-	if err := cmd.Run(); err != nil {
+// pushToRemote pushes changes to remote repository
+func pushToRemote(repo *git.Repository) error {
+	// Push using go-git
+	err := repo.Push(&git.PushOptions{
+		RemoteName: "origin",
+		Progress:   os.Stdout,
+	})
+	
+	if err != nil && err != transport.ErrEmptyRemoteRepository {
 		return fmt.Errorf("git push failed: %v", err)
 	}
+	
 	return nil
 }
 
-// pullFromGitHub pulls changes from GitHub
-func pullFromGitHub(repoPath string) error {
-	cmd := exec.Command("git", "pull")
-	cmd.Dir = repoPath
-	if err := cmd.Run(); err != nil {
+// pullFromRemote pulls changes from remote repository
+func pullFromRemote(repo *git.Repository) error {
+	w, err := repo.Worktree()
+	if err != nil {
+		return fmt.Errorf("failed to get worktree: %v", err)
+	}
+	
+	err = w.Pull(&git.PullOptions{
+		RemoteName: "origin",
+		Progress:   os.Stdout,
+	})
+	
+	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return fmt.Errorf("git pull failed: %v", err)
 	}
+	
 	return nil
 }
 
@@ -221,7 +246,8 @@ func main() {
 	}
 	
 	// Ensure repository exists
-	if err := ensureRepoExists(config.RepoPath); err != nil {
+	repo, err := ensureRepoExists(config.RepoPath)
+	if err != nil {
 		fmt.Printf("Error initializing repository: %v\n", err)
 		os.Exit(1)
 	}
@@ -254,7 +280,6 @@ func main() {
 	
 	// Load notes initially
 	var notes []Note
-	var err error
 	
 	refreshNotesList := func() {
 		notes, err = listNotes(config.RepoPath)
@@ -301,7 +326,7 @@ func main() {
 		}
 		
 		// Save note
-		if err := saveNote(note, config.RepoPath); err != nil {
+		if err := saveNote(note, repo, config.RepoPath); err != nil {
 			dialog.ShowError(err, w)
 			return
 		}
@@ -317,19 +342,19 @@ func main() {
 		dialog.ShowInformation("Success", "Note saved successfully", w)
 	})
 	
-	pushButton := widget.NewButtonWithIcon("Push to GitHub", theme.UploadIcon(), func() {
-		// Push to GitHub
-		if err := pushToGitHub(config.RepoPath); err != nil {
+	pushButton := widget.NewButtonWithIcon("Push to Remote", theme.UploadIcon(), func() {
+		// Push to remote repository
+		if err := pushToRemote(repo); err != nil {
 			dialog.ShowError(err, w)
 			return
 		}
 		
-		dialog.ShowInformation("Success", "Changes pushed to GitHub", w)
+		dialog.ShowInformation("Success", "Changes pushed to remote repository", w)
 	})
 	
-	pullButton := widget.NewButtonWithIcon("Pull from GitHub", theme.DownloadIcon(), func() {
-		// Pull from GitHub
-		if err := pullFromGitHub(config.RepoPath); err != nil {
+	pullButton := widget.NewButtonWithIcon("Pull from Remote", theme.DownloadIcon(), func() {
+		// Pull from remote repository
+		if err := pullFromRemote(repo); err != nil {
 			dialog.ShowError(err, w)
 			return
 		}
@@ -337,7 +362,7 @@ func main() {
 		// Refresh list
 		refreshNotesList()
 		
-		dialog.ShowInformation("Success", "Changes pulled from GitHub", w)
+		dialog.ShowInformation("Success", "Changes pulled from remote repository", w)
 	})
 	
 	newButton := widget.NewButtonWithIcon("New Note", theme.FileIcon(), func() {
