@@ -133,3 +133,36 @@ sudo apt-get install xorg-dev
 ```
 
 This should provide all the X11-related libraries that Fyne might need for building GUI applications on Linux.
+
+## Fix UI
+
+The field to enter the note context should display multiple lines and have a scroll bar
+
+
+### Claude response
+
+I see the issue. The note content entry field should be larger and have scrollbars to handle larger content blocks. The current implementation uses a widget.NewMultiLineEntry(), but we need to ensure it's properly configured within a scrollable container and has appropriate sizing. Let me fix that:
+
+
+Go Note-Taking App with Git Integration
+
+[code](./main.go)
+
+I've made several improvements to enhance the content entry field and overall UI layout:
+
+1. Improved the content entry field:
+* Added proper word wrapping with contentEntry.Wrapping = fyne.TextWrapWord
+* Placed the content entry inside a dedicated scroll container
+* Set a minimum size for the content area (500x400) to ensure it's large enough for editing
+* Increased the window size to 900x700 pixels for a better overall experience
+2. Better layout organization:
+* Used a Border layout for the editor area, which allows the content to fill all available space
+* Separated the form fields (title/tags) from the content for better visual organization
+* Placed the buttons at the bottom of the editor container
+* Used a fixed minimum width (200px) for the notes list
+3. UI enhancements:
+* Adjusted the split offset to 25% for the list, 75% for the editor
+* Added a scroll container for the list panel to handle many notes
+* Used consistent containers with proper padding
+
+These changes should provide a much better editing experience with the content field now having proper scrolling and taking up most of the available space. The UI is also more organized with a clearer visual hierarchy.

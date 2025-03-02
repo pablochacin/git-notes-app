@@ -256,7 +256,7 @@ func main() {
 	a := app.New()
 	a.Settings().SetTheme(theme.DarkTheme())
 	w := a.NewWindow("Notes Manager")
-	w.Resize(fyne.NewSize(800, 600))
+	w.Resize(fyne.NewSize(900, 700))
 	
 	// UI elements
 	titleEntry := widget.NewEntry()
@@ -265,8 +265,14 @@ func main() {
 	tagsEntry := widget.NewEntry()
 	tagsEntry.SetPlaceHolder("Tags (comma separated)")
 	
+	// Create multiline content entry with proper scrolling
 	contentEntry := widget.NewMultiLineEntry()
 	contentEntry.SetPlaceHolder("Write your note content here (Markdown supported)")
+	contentEntry.Wrapping = fyne.TextWrapWord  // Enable word wrapping
+	
+	// Content entry should take up all available space
+	contentEntryScroll := container.NewScroll(contentEntry)
+	contentEntryScroll.SetMinSize(fyne.NewSize(500, 400))  // Set minimum size for content area
 	
 	notesList := widget.NewList(
 		func() int { return 0 }, // Will be updated when we load notes
@@ -383,19 +389,36 @@ func main() {
 	}
 	
 	// Layout
-	editorContainer := container.NewVBox(
+	// Create a form layout for title and tags
+	formContainer := container.NewVBox(
 		widget.NewLabel("Title:"),
 		titleEntry,
 		widget.NewLabel("Tags:"),
 		tagsEntry,
-		widget.NewLabel("Content:"),
-		container.NewScroll(contentEntry),
-		container.NewHBox(
-			saveButton,
-			newButton,
-		),
 	)
 	
+	// Content area with label
+	contentContainer := container.NewVBox(
+		widget.NewLabel("Content:"),
+		contentEntryScroll,  // Use the scrollable container
+	)
+	
+	// Buttons container
+	buttonContainer := container.NewHBox(
+		saveButton,
+		newButton,
+	)
+	
+	// Stack everything in the editor area
+	editorContainer := container.NewBorder(
+		formContainer,  // Top
+		buttonContainer, // Bottom
+		nil,            // Left
+		nil,            // Right
+		contentContainer // Center (fills remaining space)
+	)
+	
+	// List container with fixed width
 	listContainer := container.NewVBox(
 		widget.NewLabel("Notes:"),
 		container.NewScroll(notesList),
@@ -405,12 +428,16 @@ func main() {
 		),
 	)
 	
+	// Set minimum size for list container
+	listScroll := container.NewScroll(listContainer)
+	listScroll.SetMinSize(fyne.NewSize(200, 0))
+	
 	// Split view
 	split := container.NewHSplit(
-		listContainer,
+		listScroll,
 		editorContainer,
 	)
-	split.SetOffset(0.3) // 30% for list, 70% for editor
+	split.SetOffset(0.25) // 25% for list, 75% for editor
 	
 	// Set main container
 	w.SetContent(container.New(layout.NewMaxLayout(), split))
