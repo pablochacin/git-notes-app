@@ -2709,3 +2709,12 @@ I've made the following improvements to ensure the notes list uses the full spac
 
 These changes will ensure that the list of notes uses the full available height in the left panel, showing multiple notes at once, and will properly scroll when there are more notes than can fit in the viewable area.
 
+<details>
+
+<summary> screenshots (click to expand) </summary>
+
+![main view](./screenshots/v4/main-view.png)
+
+![list updated](./screenshots/v4/list-updated.png)
+
+</details>
