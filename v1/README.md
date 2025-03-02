@@ -21,3 +21,10 @@
 ![main view](./screenshots/v3/main-view.png)
 
 ![note entry](./screenshots/v3/note-entry.png)
+
+### Four iteration with full note list panel
+
+![main view](./screenshots/v4/main-view.png)
+
+![list updated](./screenshots/v4/list-updated.png)
+
