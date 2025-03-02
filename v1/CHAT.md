@@ -317,3 +317,110 @@ import (
 ```
 
 This modification will sort the notes so that the most recent ones appear first in the list, which should make them display in the order you want in the UI panel.
+
+## Retry fixing ordering
+
+The list is still not ordered.
+
+### Claude response
+
+Let me look at your code more carefully to understand why the list still isn't ordered. The issue might be in how the list is refreshed or displayed.
+
+Looking at your code again, there are a couple of possibilities why the sorting isn't being reflected in the UI:
+
+1. You need to make sure the sorting is actually applied before the UI is refreshed
+2. The notesList widget might need more than just a Refresh() call to properly update with the new order
+
+Let's modify your code to ensure the sorting works properly:
+
+```go
+// Add this function to your code - it will sort the notes array
+func sortNotesByCreationTime(notes []Note) {
+    sort.Slice(notes, func(i, j int) bool {
+        return notes[i].Created.After(notes[j].Created)
+    })
+}
+
+// Then modify your refreshNotesList function
+refreshNotesList := func() {
+    var err error
+    notes, err = listNotes(config.RepoPath)
+    if err != nil {
+        dialog.ShowError(err, w)
+        return
+    }
+    
+    // Sort notes by creation time (newest first)
+    sortNotesByCreationTime(notes)
+    
+    // Update the widget - you may need a full refresh
+    notesList.Refresh()
+}
+```
+
+Also, ensure that any time you update the notes slice, you're sorting it afterward. This includes:
+
+1. When initially loading notes in main()
+2. After pulling from the remote repository
+3. After saving a new note
+
+For the save operation, you might want to modify your save button handler to explicitly re-sort:
+
+```go
+saveButton := widget.NewButtonWithIcon("Save Note", theme.DocumentSaveIcon(), func() {
+    // ... existing code ...
+    
+    // Refresh list - make sure this includes sorting
+    refreshNotesList()
+    
+    dialog.ShowInformation("Success", "Note saved successfully", w)
+})
+```
+
+If this still doesn't work, let me know and we can look deeper into how the Fyne list widget handles data updates.
+
+## ask to apply changes in code instead of showing the difference
+
+can you apply those changes to the code I gave you and generate a full code?
+
+### Claude response
+
+Notes Manager App with Sorted List
+
+[Click to open code](main.go)
+
+I've updated the code to sort the notes by creation time with newest first. Here are the key changes I made:
+
+1. Added a new sortNotesByCreationTime function that sorts the notes slice with the most recent notes first:
+
+```go
+func sortNotesByCreationTime(notes []Note) {
+    sort.Slice(notes, func(i, j int) bool {
+        return notes[i].Created.After(notes[j].Created)
+    })
+}
+```
+
+2. Added the "sort" package to the imports
+3. Modified the refreshNotesList function to sort the notes after retrieving them:
+
+```go
+refreshNotesList := func() {
+    var err error
+    notes, err = listNotes(config.RepoPath)
+    if err != nil {
+        dialog.ShowError(err, w)
+        return
+    }
+    
+    // Sort notes by creation time (newest first)
+    sortNotesByCreationTime(notes)
+    
+    // Fully refresh the list widget
+    notesList.Refresh()
+}
+```
+
+4. Ensured that sorting is applied during the initial loading of notes and after any operations that modify the notes collection (save, pull)
+
+These changes will ensure that the notes list is always displayed with the newest notes at the top, which should solve your ordering issue.

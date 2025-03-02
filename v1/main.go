@@ -107,37 +107,40 @@ func saveNote(note Note, repo *git.Repository, repoPath string) error {
 	return nil
 }
 
+// listNotes retrieves all notes from the repository
 func listNotes(repoPath string) ([]Note, error) {
 	var notes []Note
 	
 	// Get all .md files
 	files, err := filepath.Glob(filepath.Join(repoPath, "*.md"))
 	if err != nil {
-	    return nil, fmt.Errorf("failed to list files: %v", err)
+		return nil, fmt.Errorf("failed to list files: %v", err)
 	}
 	
 	for _, file := range files {
-	    content, err := ioutil.ReadFile(file)
-	    if err != nil {
-		continue
-	    }
-	    
-	    // Parse note from file
-	    note, err := parseNoteFromContent(content, filepath.Base(file))
-	    if err != nil {
-		continue
-	    }
-	    
-	    notes = append(notes, note)
+		content, err := ioutil.ReadFile(file)
+		if err != nil {
+			continue
+		}
+		
+		// Parse note from file
+		note, err := parseNoteFromContent(content, filepath.Base(file))
+		if err != nil {
+			continue
+		}
+		
+		notes = append(notes, note)
 	}
 	
-	// Sort notes by creation time (newest first)
-	sort.Slice(notes, func(i, j int) bool {
-	    return notes[i].Created.After(notes[j].Created)
-	})
-	
 	return notes, nil
-    }
+}
+
+// sortNotesByCreationTime sorts notes by creation time (newest first)
+func sortNotesByCreationTime(notes []Note) {
+	sort.Slice(notes, func(i, j int) bool {
+		return notes[i].Created.After(notes[j].Created)
+	})
+}
 
 // parseNoteFromContent extracts note data from file content
 func parseNoteFromContent(content []byte, filename string) (Note, error) {
@@ -323,6 +326,9 @@ func main() {
 			return
 		}
 		
+		// Sort notes by creation time (newest first)
+		sortNotesByCreationTime(notes)
+		
 		// Fully refresh the list widget
 		notesList.Refresh()
 	}
@@ -361,7 +367,7 @@ func main() {
 		tagsEntry.SetText("")
 		contentEntry.SetText("")
 		
-		// Refresh list
+		// Refresh list (including sorting)
 		refreshNotesList()
 		
 		dialog.ShowInformation("Success", "Note saved successfully", w)
@@ -384,7 +390,7 @@ func main() {
 			return
 		}
 		
-		// Refresh list
+		// Refresh list (including sorting)
 		refreshNotesList()
 		
 		dialog.ShowInformation("Success", "Changes pulled from remote repository", w)
@@ -456,7 +462,7 @@ func main() {
 	// Set main container
 	w.SetContent(split)
 	
-	// Initial refresh
+	// Initial refresh (including sorting)
 	refreshNotesList()
 	
 	// Show and run
