@@ -283,15 +283,32 @@ func main() {
 			return len(notes) // This will update when notes slice changes
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("Note Title")
+			// Make the template item more visible with proper styling
+			return container.NewHBox(
+				widget.NewLabel(""),
+			)
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			label := obj.(*widget.Label)
 			if id < len(notes) {
+				// Get the label from the container
+				label := obj.(*fyne.Container).Objects[0].(*widget.Label)
 				label.SetText(notes[id].Title)
+				// Make text bold and properly styled
+				label.TextStyle = fyne.TextStyle{Bold: true}
+				label.Alignment = fyne.TextAlignLeading
 			}
 		},
 	)
+	
+	// Custom item size to make list items taller and more visible
+	notesList.OnSelected = func(id widget.ListItemID) {
+		if id < len(notes) {
+			selectedNote := notes[id]
+			titleEntry.SetText(selectedNote.Title)
+			tagsEntry.SetText(strings.Join(selectedNote.Tags, ", "))
+			contentEntry.SetText(selectedNote.Content)
+		}
+	}
 	
 	// Function to refresh the notes list
 	refreshNotesList := func() {
@@ -302,7 +319,7 @@ func main() {
 			return
 		}
 		
-		// This is the key change - fully refresh the list widget
+		// Fully refresh the list widget
 		notesList.Refresh()
 	}
 	
@@ -376,16 +393,6 @@ func main() {
 		contentEntry.SetText("")
 	})
 	
-	// Note selection handling
-	notesList.OnSelected = func(id widget.ListItemID) {
-		if id < len(notes) {
-			selectedNote := notes[id]
-			titleEntry.SetText(selectedNote.Title)
-			tagsEntry.SetText(strings.Join(selectedNote.Tags, ", "))
-			contentEntry.SetText(selectedNote.Content)
-		}
-	}
-	
 	// Layout
 	// Create a form layout for title and tags
 	formContainer := container.NewVBox(
@@ -416,29 +423,34 @@ func main() {
 		contentContainer, // Center (fills remaining space)
 	)
 	
-	// List container with fixed width
-	listContainer := container.NewVBox(
-		widget.NewLabel("Notes:"),
-		container.NewScroll(notesList),
-		container.NewHBox(
-			pushButton,
-			pullButton,
-		),
+	// List panel header
+	listHeader := widget.NewLabelWithStyle("Notes", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	
+	// Git operation buttons in the list panel
+	gitButtonsContainer := container.NewHBox(
+		pushButton,
+		pullButton,
+	)
+	
+	// Make the notes list fill all available space
+	listContent := container.NewBorder(
+		listHeader,       // Top
+		gitButtonsContainer, // Bottom
+		nil,              // Left
+		nil,              // Right
+		notesList         // Center (fills remaining space)
 	)
 	
 	// Set minimum size for list container
-	listScroll := container.NewScroll(listContainer)
-	listScroll.SetMinSize(fyne.NewSize(200, 0))
-	
-	// Split view
+	// The list panel should take about 25% of the window width, but at least 200px
 	split := container.NewHSplit(
-		listScroll,
+		listContent,
 		editorContainer,
 	)
 	split.SetOffset(0.25) // 25% for list, 75% for editor
 	
 	// Set main container
-	w.SetContent(container.New(layout.NewMaxLayout(), split))
+	w.SetContent(split)
 	
 	// Initial refresh
 	refreshNotesList()

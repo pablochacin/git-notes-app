@@ -232,5 +232,27 @@ The previous approach was redefining the Length and UpdateItem functions every t
 This should now properly update the list after adding a new note, and the code should compile successfully.
 
 
+## Fix list of notes size
 
+The list of notes is too smail. It only shows a note. use the full space of the left panel to display the list of notes
+
+### Claude response
+
+You're right - the list of notes is currently too constrained in the interface. Let me improve the layout to ensure the notes list uses the full space of the left panel.
+
+
+Notes App with Improved List Layout
+
+[Click to open code](./main.go)
+
+I've made the following improvements to ensure the notes list uses the full space of the left panel:
+
+1. Removed unnecessary containers: I've eliminated the extra container nesting that was restricting the list size. Now the list will naturally expand to fill the available space.
+2. Improved the list item template: Changed the list item template to use a container with a label that has better styling, including bold text and proper alignment.
+3. Enhanced the layout structure: Restructured the left panel layout to use a border layout with the list in the center position, which allows it to automatically expand and fill the available space.
+4. Simplified the container hierarchy: Removed the extra scrolling container that was limiting the list's ability to expand, letting the list's built-in scrolling functionality handle overflow instead.
+5. Better visual hierarchy: Added a bold header "Notes" at the top of the list panel to clearly demarcate the section.
+6. Direct HSplit usage: Used the HSplit container directly as the main content, allowing for a cleaner split between the list panel and editor panel.
+
+These changes will ensure that the list of notes uses the full available height in the left panel, showing multiple notes at once, and will properly scroll when there are more notes than can fit in the viewable area.
 
