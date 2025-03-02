@@ -415,7 +415,7 @@ func main() {
 		buttonContainer, // Bottom
 		nil,            // Left
 		nil,            // Right
-		contentContainer // Center (fills remaining space)
+		contentContainer, // Center (fills remaining space)
 	)
 	
 	// List container with fixed width
