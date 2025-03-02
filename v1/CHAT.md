@@ -66,3 +66,31 @@ Files are automatically committed to the local git repository
 You can manually push/pull to sync with GitHub
 Would you like me to explain any specific part of the code in more detail or make any modifications to the application?
 
+
+## Change don't use git commands
+
+I want to make some changes. First, don't use git commands. use only the go-git library for all access to the git repository. Also, do not reference github in the code. use only git instead.
+
+I'll make those changes to use only the go-git library and remove any GitHub-specific references. Here's the updated code:
+
+
+Go Note-Taking App with Git Integration
+
+[Click to open code](./main.go)
+
+I've made the following changes to the code:
+
+1. Removed GitHub-specific references:
+* Changed "GitHub" to "Remote" or "remote repository" in button labels and messages
+* Removed all GitHub-specific terminology from comments and function names
+2. Replaced shell git commands with go-git library:
+* Added proper go-git implementation for pushing to remote repositories
+* Added proper go-git implementation for pulling from remote repositories
+* Used the Repository object throughout the application
+* Added proper error handling for git-specific errors
+3. Improved repository handling:
+* The repository object is now returned from ensureRepoExists and used throughout the application
+* Added proper worktree handling for git operations
+*Included proper commit signature information
+
+The application now exclusively uses the go-git library for all git operations and avoids any GitHub-specific references. This makes the app more generic and suitable for use with any git remote, not just GitHub.
