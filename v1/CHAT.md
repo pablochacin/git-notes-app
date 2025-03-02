@@ -923,3 +923,45 @@ I've made the following changes to the code:
 *Included proper commit signature information
 
 The application now exclusively uses the go-git library for all git operations and avoids any GitHub-specific references. This makes the app more generic and suitable for use with any git remote, not just GitHub.
+
+### Fix build error
+
+The go build command fails with this error /usr/bin/ld: cannot find -lXxf86vm: No such file or directory
+
+Edit
+
+This error indicates that your system is missing a development library that's required by the Fyne UI toolkit. The Xxf86vm library is part of X11 development packages and is needed for graphics rendering.
+
+To fix this issue, you'll need to install the appropriate development packages. The exact package name varies depending on your Linux distribution:
+
+For Ubuntu/Debian-based systems:
+
+```bash
+sudo apt-get install libxxf86vm-dev
+```
+
+For Fedora/RHEL-based systems:
+
+```bash
+sudo dnf install libXxf86vm-devel
+```
+
+For Arch Linux:
+
+```bash
+sudo pacman -S libxxf86vm
+```
+
+After installing the required package, try running the go build command again. You might also need to install additional X11 development libraries. If you're on Ubuntu, you can install a comprehensive set of X11 libraries with:
+
+```bash
+sudo apt-get install xorg-dev
+```
+
+This should provide all the X11-related libraries that Fyne might need for building GUI applications on Linux.
+
+### Code review
+
+The code worked.
+
+![screenshot](./screenshots/initial-version.png)
