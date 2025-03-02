@@ -16,6 +16,8 @@
 
 ![note entry](./screenshots/v2/note-entry.png)
 
-### thirs iteration with list refresh
+### third iteration with list refresh
 
 ![main view](./screenshots/v3/main-view.png)
+
+![note entry](./screenshots/v3/note-entry.png)
