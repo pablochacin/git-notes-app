@@ -124,6 +124,8 @@ func createConfigFile(homeDir, configPath string,  a fyne.App) (AppConfig, error
 	
 	<-done // Wait for dialog to complete
 	
+	w.Close()
+	
 	return config, nil
 }
 

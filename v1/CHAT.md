@@ -4758,3 +4758,78 @@ fyne.io/fyne/v2/internal/driver/glfw.(*window).ShowAndRun(0xc000007dc0?)
 main.main()
         /home/pablo/go/src/github.com/pablochacin/git-notes-app/v1/main.go:570 +0xfd8
 ```
+
+### Fix the dialog not closing
+
+I asked Claude the following
+
+> Forget the last changes you suggested. I found the problem was a missing ShowAndRun call on the configuration dialog. This is now fixed. The dialog is shown, but after saving changes, the dialog remains open. Fix this problem.
+
+### Response from Claude
+
+I understand the issue now. The configuration dialog is being shown correctly, but it's not closing after saving the changes. Let's fix this specific problem in the createConfigFile function.
+
+The issue is that after writing the configuration to the file, the dialog remains open because there's no code to close the window. In the current implementation, we're waiting for the dialog result using the done channel, but we need to explicitly close the window after processing the dialog result.
+
+Here's how to fix it:
+
+```golang
+// createConfigFile creates a new configuration file with user input
+func createConfigFile(homeDir, configPath string) (AppConfig, error) {
+    config := AppConfig{}
+    
+    // Default repository path
+    defaultRepoPath := filepath.Join(homeDir, "notes-repo")
+    
+    // Ask user for repository path using dialog
+    a := app.New()
+    w := a.NewWindow("Git Notes Configuration")
+    w.Resize(fyne.NewSize(400, 200))
+    
+    // Entry for repository path
+    repoPathEntry := widget.NewEntry()
+    repoPathEntry.SetText(defaultRepoPath)
+    
+    // Form for the dialog
+    form := &widget.Form{
+        Items: []*widget.FormItem{
+            {Text: "Repository Path:", Widget: repoPathEntry},
+        },
+    }
+    
+    // Channel to get the result
+    done := make(chan bool)
+    
+    // Create and show dialog
+    dialog.ShowCustomConfirm("Git Notes Configuration", "Save", "Cancel", form, func(save bool) {
+        if save {
+            config.RepoPath = repoPathEntry.Text
+            
+            // Write to config file
+            configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
+            err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
+            if err != nil {
+                dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
+            }
+        } else {
+            // Use default if canceled
+            config.RepoPath = defaultRepoPath
+            
+            // Write default to config file
+            configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
+            err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
+            if err != nil {
+                dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
+            }
+        }
+        done <- true
+    }, w)
+    
+    w.ShowAndRun() // This line shows the window, but blocks until window is closed
+    
+    <-done // Wait for dialog to complete
+    w.Close()
+    
+    return config, nil
+}
+```
