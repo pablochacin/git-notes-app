@@ -119,6 +119,8 @@ func createConfigFile(homeDir, configPath string,  a fyne.App) (AppConfig, error
 		}
 		done <- true
 	}, w)
+
+	w.ShowAndRun()
 	
 	<-done // Wait for dialog to complete
 	

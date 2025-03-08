@@ -43,3 +43,7 @@ At this point the application was totally functional and was capable of:
 
 6. Load path to repository from configuration
 
+6.1 Added configuration dialog (the dialog was not shown)
+6.2 First attempt to fix dialog not shown by passing the main application's app to the config dialog (still not shown)
+6.3 Dialog not shown fixed manually by adding a missing `ShowAndRun` call to the configuration dialog. Still fails
+
