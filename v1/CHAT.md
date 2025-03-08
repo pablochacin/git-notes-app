@@ -4833,3 +4833,95 @@ func createConfigFile(homeDir, configPath string) (AppConfig, error) {
     return config, nil
 }
 ```
+
+### fix black window Shown
+
+After this changes, the black window still remained.
+I asked the following to Claude.
+
+> after clicking either save or cancel the configuration window is still open but shown nothing.
+
+### Claude response
+
+The issue is that we're trying to manually manage the window lifecycle when Fyne's dialog system already handles this. Let's simplify the approach and make it work properly.
+
+The problem is in how we're handling the dialog completion. When using Fyne's built-in dialogs, we should let them manage their own lifecycle rather than trying to manually close windows.
+
+Here's how to fix the createConfigFile function:
+
+```golang
+// createConfigFile creates a new configuration file with user input
+func createConfigFile(homeDir, configPath string) (AppConfig, error) {
+    config := AppConfig{}
+    
+    // Default repository path
+    defaultRepoPath := filepath.Join(homeDir, "notes-repo")
+    
+    // Create a temporary app instance for configuration
+    a := app.New()
+    w := a.NewWindow("Git Notes Configuration")
+    w.Resize(fyne.NewSize(400, 200))
+    
+    // Entry for repository path
+    repoPathEntry := widget.NewEntry()
+    repoPathEntry.SetText(defaultRepoPath)
+    
+    // Form for the dialog
+    form := &widget.Form{
+        Items: []*widget.FormItem{
+            {Text: "Repository Path:", Widget: repoPathEntry},
+        },
+    }
+    
+    // Channel to get the result
+    done := make(chan bool)
+    
+    // Create and show dialog
+    dlg := dialog.NewCustomConfirm("Git Notes Configuration", "Save", "Cancel", form, func(save bool) {
+        if save {
+            config.RepoPath = repoPathEntry.Text
+        } else {
+            // Use default if canceled
+            config.RepoPath = defaultRepoPath
+        }
+        
+        // Write to config file regardless of which button was pressed
+        configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
+        err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
+        if err != nil {
+            // Show error dialog and don't signal completion yet
+            errDlg := dialog.NewError(fmt.Errorf("failed to write config file: %v", err), w)
+            errDlg.SetOnClosed(func() {
+                // Now we can signal completion
+                done <- true
+            })
+            errDlg.Show()
+            return
+        }
+        
+        // Signal completion directly if no error
+        done <- true
+    })
+    
+    // Show the dialog
+    dlg.Show()
+    
+    // Wait for completion signal
+    <-done
+    
+    // Explicitly quit the app
+    a.Quit()
+    
+    return config, nil
+}
+```
+
+### Review of the code
+
+The code proposed by claude had multiple issues.
+
+First it was creating again a new application, instead of using the application passed to the `createConfigFile`.
+
+Also, there was a missing argument to the `NewCustomConfirm` method. I tried the changes but the problem of the application not been shown returned.
+
+
