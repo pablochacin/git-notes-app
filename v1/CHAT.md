@@ -4924,4 +4924,166 @@ First it was creating again a new application, instead of using the application 
 
 Also, there was a missing argument to the `NewCustomConfirm` method. I tried the changes but the problem of the application not been shown returned.
 
+### Change approach reuse main application's window
 
+Looking at the code, and the new `dlg.Show` call, I realized the problem was maybe that we didn't need a new window but to create a dialog on the main application's window.
+
+> Forget the latest changes you suggested. I want to try something different: do not create a new window in the createConfigFile function. Instead, pass the window from the main function.
+
+### Answer from Claude
+
+That's a good approach that should simplify the application flow. Let's refactor the code to pass the window from the main function to the configuration process, which will help avoid issues with multiple windows and application instances.
+Here's how we can modify the code:
+
+1. First, let's update the createConfigFile function signature to accept a window parameter:
+
+```
+// createConfigFile creates a new configuration file with user input
+func createConfigFile(homeDir, configPath string, w fyne.Window) (AppConfig, error) {
+    config := AppConfig{}
+    
+    // Default repository path
+    defaultRepoPath := filepath.Join(homeDir, "notes-repo")
+    
+    // Entry for repository path
+    repoPathEntry := widget.NewEntry()
+    repoPathEntry.SetText(defaultRepoPath)
+    
+    // Form for the dialog
+    form := &widget.Form{
+        Items: []*widget.FormItem{
+            {Text: "Repository Path:", Widget: repoPathEntry},
+        },
+    }
+    
+    // Channel to get the result
+    done := make(chan bool)
+    
+    // Create and show dialog using the window parameter
+    dialog.ShowCustomConfirm("Git Notes Configuration", "Save", "Cancel", form, func(save bool) {
+        if save {
+            config.RepoPath = repoPathEntry.Text
+            
+            // Write to config file
+            configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
+            err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
+            if err != nil {
+                dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
+            }
+        } else {
+            // Use default if canceled
+            config.RepoPath = defaultRepoPath
+            
+            // Write default to config file
+            configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
+            err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
+            if err != nil {
+                dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
+            }
+        }
+        done <- true
+    }, w)
+    
+    <-done // Wait for dialog to complete
+    
+    return config, nil
+}
+```
+
+2. Now, let's update the loadConfig function to also accept a window parameter:
+
+```go
+// loadConfig loads the configuration from .git-notes.conf file
+func loadConfig(w fyne.Window) (AppConfig, error) {
+    config := AppConfig{}
+    homeDir, err := os.UserHomeDir()
+    if err != nil {
+        return config, fmt.Errorf("failed to get user home directory: %v", err)
+    }
+
+    configPath := filepath.Join(homeDir, ".git-notes.conf")
+    
+    // Check if config file exists
+    if _, err := os.Stat(configPath); os.IsNotExist(err) {
+        // Config file doesn't exist, create it
+        return createConfigFile(homeDir, configPath, w)
+    }
+    
+    // Read the config file
+    content, err := ioutil.ReadFile(configPath)
+    if err != nil {
+        return config, fmt.Errorf("failed to read config file: %v", err)
+    }
+    
+    // Parse config file
+    lines := strings.Split(string(content), "\n")
+    for _, line := range lines {
+        line = strings.TrimSpace(line)
+        if strings.HasPrefix(line, "REPO_PATH=") {
+            config.RepoPath = strings.TrimPrefix(line, "REPO_PATH=")
+        }
+    }
+    
+    // Validate config
+    if config.RepoPath == "" {
+        return config, fmt.Errorf("repository path not found in config file")
+    }
+    
+    return config, nil
+}
+```
+
+3. Finally, let's update the main function to create the window first and pass it to loadConfig:
+
+```go
+func main() {
+    // Create Fyne app
+    a := app.New()
+    a.Settings().SetTheme(theme.DarkTheme())
+    
+    // Create a temporary window for configuration if needed
+    configWindow := a.NewWindow("Git Notes Configuration")
+    configWindow.Resize(fyne.NewSize(400, 200))
+    
+    // Load configuration, passing the window
+    config, err := loadConfig(configWindow)
+    if err != nil {
+        fmt.Printf("Error loading configuration: %v\n", err)
+        os.Exit(1)
+    }
+    
+    // Ensure repository exists
+    repo, err := ensureRepoExists(config.RepoPath)
+    if err != nil {
+        fmt.Printf("Error initializing repository: %v\n", err)
+        os.Exit(1)
+    }
+    
+    // Create main application window
+    w := a.NewWindow("Notes Manager")
+    w.Resize(fyne.NewSize(900, 700))
+    
+    // Rest of your existing UI setup...
+    // ...
+    
+    // Hide the config window if it was used
+    configWindow.Hide()
+    
+    // Show and run the main window
+    w.ShowAndRun()
+}
+```
+
+This approach:
+
+1. Creates a single application instance in main()
+2. Creates a configuration window early on
+3. Passes that window to the configuration functions
+4. Hides the configuration window once main application starts
+5. Shows the main application window
+
+This should avoid the issues with multiple windows and ensure that the configuration dialog properly closes after it's done.
+
+### Review of the code
+
+The changes suggested by Claude did not solve the problem of the application not been shown.
