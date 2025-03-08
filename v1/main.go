@@ -33,46 +33,49 @@ type AppConfig struct {
 }
 
 // loadConfig loads the configuration from .git-notes.conf file
-func loadConfig(w fyne.Window) (AppConfig, error) {
+func loadConfig( a fyne.App) (AppConfig, error) {
 	config := AppConfig{}
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-	    return config, fmt.Errorf("failed to get user home directory: %v", err)
+		return config, fmt.Errorf("failed to get user home directory: %v", err)
 	}
-    
+
 	configPath := filepath.Join(homeDir, ".git-notes.conf")
 	
 	// Check if config file exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-	    // Config file doesn't exist, create it
-	    return createConfigFile(homeDir, configPath, w)
+		// Config file doesn't exist, create it
+		return createConfigFile(homeDir, configPath, a)
 	}
 	
 	// Read the config file
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
-	    return config, fmt.Errorf("failed to read config file: %v", err)
+		return config, fmt.Errorf("failed to read config file: %v", err)
 	}
 	
 	// Parse config file
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
-	    line = strings.TrimSpace(line)
-	    if strings.HasPrefix(line, "REPO_PATH=") {
-		config.RepoPath = strings.TrimPrefix(line, "REPO_PATH=")
-	    }
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "REPO_PATH=") {
+			config.RepoPath = strings.TrimPrefix(line, "REPO_PATH=")
+		}
 	}
 	
 	// Validate config
 	if config.RepoPath == "" {
-	    return config, fmt.Errorf("repository path not found in config file")
+		return config, fmt.Errorf("repository path not found in config file")
 	}
 	
 	return config, nil
 }
 
 // createConfigFile creates a new configuration file with user input
-func createConfigFile(homeDir, configPath string, w fyne.Window) (AppConfig, error) {
+func createConfigFile(homeDir, configPath string,  a fyne.App) (AppConfig, error) {
+	w := a.NewWindow("Git Notes Configuration")
+	w.Resize(fyne.NewSize(400, 200))
+
 	config := AppConfig{}
 	
 	// Default repository path
@@ -84,40 +87,44 @@ func createConfigFile(homeDir, configPath string, w fyne.Window) (AppConfig, err
 	
 	// Form for the dialog
 	form := &widget.Form{
-	    Items: []*widget.FormItem{
-		{Text: "Repository Path:", Widget: repoPathEntry},
-	    },
+		Items: []*widget.FormItem{
+			{Text: "Repository Path:", Widget: repoPathEntry},
+		},
 	}
 	
 	// Channel to get the result
 	done := make(chan bool)
 	
-	// Create and show dialog using the window parameter
+	// Create and show dialog
 	dialog.ShowCustomConfirm("Git Notes Configuration", "Save", "Cancel", form, func(save bool) {
-	    if save {
-		config.RepoPath = repoPathEntry.Text
-		
-		// Write to config file
-		configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
-		err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-		    dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
+		if save {
+			config.RepoPath = repoPathEntry.Text
+			
+			// Write to config file
+			configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
+			err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
+			}
+		} else {
+			// Use default if canceled
+			config.RepoPath = defaultRepoPath
+			
+			// Write default to config file
+			configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
+			err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
+			}
 		}
-	    } else {
-		// Use default if canceled
-		config.RepoPath = defaultRepoPath
-		
-		// Write default to config file
-		configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
-		err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
-		if err != nil {
-		    dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
-		}
-	    }
-	    done <- true
+		done <- true
 	}, w)
+
+	w.ShowAndRun()
 	
 	<-done // Wait for dialog to complete
+	
+	w.Close()
 	
 	return config, nil
 }
@@ -344,22 +351,15 @@ func pullFromRemote(repo *git.Repository) error {
 func main() {
 	a := app.New()
 	a.Settings().SetTheme(theme.DarkTheme())
-
-	 // Create a temporary window for configuration if needed
-	 configWindow := a.NewWindow("Git Notes Configuration")
-	 configWindow.Resize(fyne.NewSize(400, 200))
-
+	w := a.NewWindow("Notes Manager")
+	w.Resize(fyne.NewSize(900, 700))
+	
 	// Then load configuration, passing the app instance
-	config, err := loadConfig(configWindow)
+	config, err := loadConfig(a)
 	if err != nil {
 	    fmt.Printf("Error loading configuration: %v\n", err)
 	    os.Exit(1)
 	}
-
-	configWindow.Hide()
-
-	w := a.NewWindow("Notes Manager")
-	w.Resize(fyne.NewSize(900, 700))
 
 	// Ensure repository exists
 	repo, err := ensureRepoExists(config.RepoPath)
@@ -527,7 +527,7 @@ func main() {
 		newButton,
 	)
 	
-	// Stack everything in the  editor area
+	// Stack everything in the editor area
 	editorContainer := container.NewBorder(
 		formContainer,  // Top
 		buttonContainer, // Bottom
@@ -561,7 +561,7 @@ func main() {
 		editorContainer,
 	)
 	split.SetOffset(0.25) // 25% for list, 75% for editor
-
+	
 	// Set main container
 	w.SetContent(split)
 	
