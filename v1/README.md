@@ -41,4 +41,5 @@ At this point the application was totally functional and was capable of:
 - add notes
 - update notes
 
+6. Load path to repository from configuration
 

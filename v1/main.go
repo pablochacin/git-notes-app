@@ -33,7 +33,7 @@ type AppConfig struct {
 }
 
 // loadConfig loads the configuration from .git-notes.conf file
-func loadConfig() (AppConfig, error) {
+func loadConfig( a fyne.App) (AppConfig, error) {
 	config := AppConfig{}
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -45,7 +45,7 @@ func loadConfig() (AppConfig, error) {
 	// Check if config file exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		// Config file doesn't exist, create it
-		return createConfigFile(homeDir, configPath)
+		return createConfigFile(homeDir, configPath, a)
 	}
 	
 	// Read the config file
@@ -72,16 +72,14 @@ func loadConfig() (AppConfig, error) {
 }
 
 // createConfigFile creates a new configuration file with user input
-func createConfigFile(homeDir, configPath string) (AppConfig, error) {
+func createConfigFile(homeDir, configPath string,  a fyne.App) (AppConfig, error) {
+	w := a.NewWindow("Git Notes Configuration")
+	w.Resize(fyne.NewSize(400, 200))
+
 	config := AppConfig{}
 	
 	// Default repository path
 	defaultRepoPath := filepath.Join(homeDir, "notes-repo")
-	
-	// Ask user for repository path using dialog
-	a := app.New()
-	w := a.NewWindow("Git Notes Configuration")
-	w.Resize(fyne.NewSize(400, 200))
 	
 	// Entry for repository path
 	repoPathEntry := widget.NewEntry()
@@ -123,7 +121,6 @@ func createConfigFile(homeDir, configPath string) (AppConfig, error) {
 	}, w)
 	
 	<-done // Wait for dialog to complete
-	w.Close()
 	
 	return config, nil
 }
@@ -348,25 +345,24 @@ func pullFromRemote(repo *git.Repository) error {
 }
 
 func main() {
-	// Load configuration
-	config, err := loadConfig()
-	if err != nil {
-		fmt.Printf("Error loading configuration: %v\n", err)
-		os.Exit(1)
-	}
+	a := app.New()
+	a.Settings().SetTheme(theme.DarkTheme())
+	w := a.NewWindow("Notes Manager")
+	w.Resize(fyne.NewSize(900, 700))
 	
+	// Then load configuration, passing the app instance
+	config, err := loadConfig(a)
+	if err != nil {
+	    fmt.Printf("Error loading configuration: %v\n", err)
+	    os.Exit(1)
+	}
+
 	// Ensure repository exists
 	repo, err := ensureRepoExists(config.RepoPath)
 	if err != nil {
 		fmt.Printf("Error initializing repository: %v\n", err)
 		os.Exit(1)
 	}
-	
-	// Create Fyne app
-	a := app.New()
-	a.Settings().SetTheme(theme.DarkTheme())
-	w := a.NewWindow("Notes Manager")
-	w.Resize(fyne.NewSize(900, 700))
 	
 	// UI elements
 	titleEntry := widget.NewEntry()
