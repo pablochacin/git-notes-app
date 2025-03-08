@@ -35,17 +35,19 @@ The process went thru several iterations.
 3. [Refresh the list of notes after inserting a note](#third-iteration-with-list-refresh)
 4. [Display the full list of notes](#fourth-iteration-with-full-note-list-panel)
 5. [Sort notes by creation date](#v5-sort-note-list)
-5.1 Second attempt to sort, didn't work
-6. Sort by date and title (did not work)
-At this point the application was totally functional and was capable of:
+5.1 Second attempt to sort, didn't work (apparently, the previous version did work, but the ordering wasn't obvious and I didn't realized)
+
+At this point the application was capable of:
 - add notes
 - update notes
+
+
 
 The screen shots bellow show the progress.
 
 ## Screenshots
 
-### v1
+### initial-version
 
 ![main view](./screenshots/v1/main-view.png)
 
@@ -53,25 +55,26 @@ The screen shots bellow show the progress.
 
 ![notes list](./screenshots/v1/note-list.png)
 
-### v2: multi line text entry
+### second-iteration-with-multi-line-text-entry
 
 ![main view](./screenshots/v2/main-view.png)
 
 ![note entry](./screenshots/v2/note-entry.png)
 
-### v3: list refresh
+
+### third-iteration-with-list-refresh
 
 ![main view](./screenshots/v3/main-view.png)
 
 ![note entry](./screenshots/v3/note-entry.png)
 
-### v4: full note list panel
+### fourth-iteration-with-full-note-list-panel
 
 ![main view](./screenshots/v4/main-view.png)
 
 ![list updated](./screenshots/v4/list-updated.png)
 
-### v5: sort note list
+### v5-sort-note-list
 
 ![main view](./screenshots/v5/main-view.png)
 
