@@ -32,6 +32,102 @@ type AppConfig struct {
 	RepoPath string
 }
 
+// loadConfig loads the configuration from .git-notes.conf file
+func loadConfig() (AppConfig, error) {
+	config := AppConfig{}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return config, fmt.Errorf("failed to get user home directory: %v", err)
+	}
+
+	configPath := filepath.Join(homeDir, ".git-notes.conf")
+	
+	// Check if config file exists
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		// Config file doesn't exist, create it
+		return createConfigFile(homeDir, configPath)
+	}
+	
+	// Read the config file
+	content, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return config, fmt.Errorf("failed to read config file: %v", err)
+	}
+	
+	// Parse config file
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "REPO_PATH=") {
+			config.RepoPath = strings.TrimPrefix(line, "REPO_PATH=")
+		}
+	}
+	
+	// Validate config
+	if config.RepoPath == "" {
+		return config, fmt.Errorf("repository path not found in config file")
+	}
+	
+	return config, nil
+}
+
+// createConfigFile creates a new configuration file with user input
+func createConfigFile(homeDir, configPath string) (AppConfig, error) {
+	config := AppConfig{}
+	
+	// Default repository path
+	defaultRepoPath := filepath.Join(homeDir, "notes-repo")
+	
+	// Ask user for repository path using dialog
+	a := app.New()
+	w := a.NewWindow("Git Notes Configuration")
+	w.Resize(fyne.NewSize(400, 200))
+	
+	// Entry for repository path
+	repoPathEntry := widget.NewEntry()
+	repoPathEntry.SetText(defaultRepoPath)
+	
+	// Form for the dialog
+	form := &widget.Form{
+		Items: []*widget.FormItem{
+			{Text: "Repository Path:", Widget: repoPathEntry},
+		},
+	}
+	
+	// Channel to get the result
+	done := make(chan bool)
+	
+	// Create and show dialog
+	dialog.ShowCustomConfirm("Git Notes Configuration", "Save", "Cancel", form, func(save bool) {
+		if save {
+			config.RepoPath = repoPathEntry.Text
+			
+			// Write to config file
+			configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
+			err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
+			}
+		} else {
+			// Use default if canceled
+			config.RepoPath = defaultRepoPath
+			
+			// Write default to config file
+			configContent := fmt.Sprintf("REPO_PATH=%s\n", config.RepoPath)
+			err := ioutil.WriteFile(configPath, []byte(configContent), 0644)
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("failed to write config file: %v", err), w)
+			}
+		}
+		done <- true
+	}, w)
+	
+	<-done // Wait for dialog to complete
+	w.Close()
+	
+	return config, nil
+}
+
 // ensureRepoExists checks if the repo exists and is a git repo
 func ensureRepoExists(path string) (*git.Repository, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -252,10 +348,11 @@ func pullFromRemote(repo *git.Repository) error {
 }
 
 func main() {
-	// Configuration
-	homeDir, _ := os.UserHomeDir()
-	config := AppConfig{
-		RepoPath: filepath.Join(homeDir, "notes-repo"),
+	// Load configuration
+	config, err := loadConfig()
+	if err != nil {
+		fmt.Printf("Error loading configuration: %v\n", err)
+		os.Exit(1)
 	}
 	
 	// Ensure repository exists
@@ -474,4 +571,3 @@ func main() {
 	// Show and run
 	w.ShowAndRun()
 }
-
