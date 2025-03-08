@@ -34,10 +34,11 @@ The process went thru several iterations.
 3. Refresh the list of notes after inserting a note
 4. Display the full list of notes
 5. Sort notes by creation date
-5.1 Second attempt to sort, didn't work
+5.1 Second attempt to sort, didn't work (apparently, the previous version did work, but the ordering wasn't obvious and I didn't realized)
 6. Sort by date and title (did not work)
 
 At this point the application was totally functional and was capable of:
 - add notes
 - update notes
+
 
