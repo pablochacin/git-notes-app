@@ -47,3 +47,8 @@ At this point the application was totally functional and was capable of:
 6.2 First attempt to fix dialog not shown by passing the main application's app to the config dialog (still not shown)
 6.3 Dialog not shown fixed manually by adding a missing `ShowAndRun` call to the configuration dialog. Still fails
 
+At this point, I realized introducing a configuration dialog would require changes in the organization of the application that seemed beyond Claude's understanding of the fyne API.
+
+
+### Example application to explore fyne API
+
