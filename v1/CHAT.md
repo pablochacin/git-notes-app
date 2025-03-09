@@ -2786,7 +2786,7 @@ This modification will sort the notes so that the most recent ones appear first 
 
 ![main view](./screenshots/v5/main-view.png)
 
-<details>
+</details>
 
 ## Retry fixing ordering
 
